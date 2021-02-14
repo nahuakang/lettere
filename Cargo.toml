@@ -1,0 +1,24 @@
+[package]
+name = "lettere"
+version = "0.1.0"
+authors = ["nahuakang <kangnahua@gmail.com>"]
+edition = "2018"
+
+[lib]
+path = "src/lib.rs"
+
+# Double square brackets: array for TOML.
+# We can only have 1 library per project, but multiple bins per project.
+[[bin]]
+path = "src/main.rs"
+name = "lettere"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+actix-web = "=4.0.0-beta.3"
+
+[dev-dependencies]
+actix-rt = "2"
+reqwest = "0.11"
+tokio = "1"
