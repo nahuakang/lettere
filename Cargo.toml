@@ -19,6 +19,7 @@ name = "lettere"
 actix-web = "=4.0.0-beta.3"
 serde = { version = "1", features = ["derive"] }
 funty = "=1.1.0"  # Workaround for bitvec breaking change
+config = "0.10.1"
 
 [dependencies.sqlx]
 version = "0.5"

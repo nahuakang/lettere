@@ -7,6 +7,8 @@
 // under `[dev-dependencies]` in Cargo.toml.
 //
 // You can inspect what code gets generated using `cargo expand --test health_check`.
+use lettere::configuration::get_configuration;
+use sqlx::{Connection, PgConnection};
 use std::net::TcpListener;
 
 /// Spin up an instance of the application and return
@@ -15,7 +17,7 @@ fn spawn_app() -> String {
     // Binding to port 0 would trigger the OS to scan for an available port
     let listener = TcpListener::bind("127.0.0.1:0").expect("failed to bind random port");
     let port = listener.local_addr().unwrap().port();
-    let server = lettere::run(listener).expect("failed to bind address");
+    let server = lettere::startup::run(listener).expect("failed to bind address");
     let _ = tokio::spawn(server);
 
     format!("http://127.0.0.1:{}", port)
@@ -38,6 +40,11 @@ async fn health_check_test() {
 #[actix_rt::test]
 async fn subscribe_returns_a_200_for_valid_form_data() {
     let app_address = spawn_app();
+    let configuration = get_configuration().expect("failed to read configuration");
+    let connection_string = configuration.database.connection_string();
+    let mut connection = PgConnection::connect(&connection_string)
+        .await
+        .expect("failed to connect to Postgres");
     let client = reqwest::Client::new();
     let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
 
@@ -50,6 +57,13 @@ async fn subscribe_returns_a_200_for_valid_form_data() {
         .expect("failed to execute request");
 
     assert_eq!(200, response.status().as_u16());
+
+    let saved = sqlx::query!("SELECT email, name FROM subscriptions")
+        .fetch_one(&mut connection)
+        .await
+        .expect("failed to fetch saved subscription");
+    assert_eq!(saved.email, "ursula_le_guin@gmail.com");
+    assert_eq!(saved.name, "le guin");
 }
 
 #[actix_rt::test]
