@@ -990,6 +990,7 @@ dependencies = [
  "config",
  "env_logger",
  "funty",
+ "log",
  "reqwest",
  "serde 1.0.123",
  "sqlx",
