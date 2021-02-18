@@ -1,6 +1,7 @@
 use actix_web::{web, HttpResponse};
 use chrono::Utc;
 use sqlx::PgPool;
+use tracing_futures::Instrument;
 use uuid::Uuid;
 
 #[derive(serde::Deserialize)]
@@ -14,16 +15,15 @@ pub async fn subscribe(
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, HttpResponse> {
     let request_id = Uuid::new_v4();
-    log::info!(
-        "request_id {} - Adding '{}' '{}' as a new subscriber",
-        request_id,
-        form.email,
-        form.name,
+    let request_span = tracing::info_span!(
+        "Adding a new subscriber.",
+        %request_id,
+        email = %form.email,
+        name = %form.name,
     );
-    log::info!(
-        "request_id {} - Saving new subscriber details to the database",
-        request_id
-    );
+    let _request_span_guard = request_span.enter();
+
+    let query_span = tracing::info_span!("Saving new subscriber details in the database.");
 
     sqlx::query!(
         r#"
@@ -35,21 +35,13 @@ pub async fn subscribe(
         form.name,
         Utc::now(),
     )
-    .execute(pool.get_ref())
+    .execute(pool.as_ref())
+    .instrument(query_span)
     .await
     .map_err(|e| {
-        log::error!(
-            "request_id {} - Failed to execute query: {:?}",
-            request_id,
-            e
-        );
+        tracing::error!("Failed to execute query: {:?}", e);
         HttpResponse::InternalServerError().finish()
     })?;
-
-    log::info!(
-        "request_id {} - New subscriber details have been saved",
-        request_id
-    );
 
     Ok(HttpResponse::Ok().finish())
 }

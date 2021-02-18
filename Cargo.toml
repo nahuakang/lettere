@@ -24,6 +24,10 @@ uuid = { version = "0.8.1", features = ["v4"] }
 chrono = "0.4.15"
 env_logger = "0.8.3"
 log = "0.4.14"
+tracing = "0.1.23"
+tracing-futures = "0.2.4"
+tracing-subscriber = { version = "0.2.12", features =["registry", "env-filter"] }
+tracing-bunyan-formatter = "0.1.7"
 
 [dependencies.sqlx]
 version = "0.5"
